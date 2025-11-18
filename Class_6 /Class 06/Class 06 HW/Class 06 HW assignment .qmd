@@ -1,0 +1,108 @@
+---
+title: "Class 06 HW"
+author: "Serena Quezada (PID: A18556865)"
+format: pdf
+---
+
+## Section 1: Improving analysis code by writing functions 
+## A
+
+scale a numeric vector to the [0,1] interval
+```{r}
+scale01 <- function(x) {
+  if (all(is.na(x))) return(x)
+  (x-min(x, na.rm = TRUE)) /
+    max(x, na.rm = TRUE) - min(x, na.rm = TRUE)
+}
+```
+
+Build the data.frame
+
+```{r}
+df <- data.frame(a=1:10, 
+                 b=seq(200,400,length=10),
+                 c=11:20,
+                 d=NA)
+```
+
+Apply the df$_to each column 
+
+```{r}
+df$a <- scale01(df$a)
+df$b <- scale01 (df$b)
+df$c <- scale01 (df$c)
+df$d <- scale01 (df$d)
+```
+
+Check the results 
+```{r}
+print(df)
+```
+
+
+## B
+
+> Q6. How would you generalize the original code above to work with any set of input protein structures?
+
+install new package (run once)
+```{r}
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+install.packages("bio3d")
+library(bio3d)
+
+download.file (
+  "https://files.rcsb.org/download/4AKE.pdb", 
+  destfile = "4AKE.pdb", 
+  quiet = TRUE)
+
+# This reads, trims and extracts B-factors 
+get_bfactors <- function(pdb_ids,
+                         chain = "A",
+                         elety = "CA",
+                         plot = TRUE) {
+  
+  #Helper that processes one structure 
+  proc_one <- function(pdb_id) {
+    pdb   <- read.pdb(pdb_id)                     # download / read file
+    trimmed <- trim.pdb(pdb, chain = chain, elety = elety)
+    trimmed$atom$b                               # return B‑factor vector
+  }
+  
+  
+  # Apply to every ID
+  bf_list <- lapply(pdb_ids, proc_one)
+  names(bf_list) <- pdb_ids
+  
+  
+  # Plot one window for all
+  if (plot) {
+    max_len <- max(sapply(bf_list, length))
+    plot(1:max_len,
+         bf_list[[1]],
+         type = "l",
+         col = 1,
+         xlab = "Residue index",
+         ylab = "B‑factor",
+         ylim = range(unlist(bf_list), na.rm = TRUE),
+         main = "B‑factor profiles (chain A, CA atoms)")
+
+    invisible(
+      lapply(seq_along(bf_list)[-1], function(i) {
+        lines(1:length(bf_list[[i]]), bf_list[[i]],
+              col = i + 1, lwd = 2)
+      })
+    )
+    legend("topright",
+           legend = pdb_ids,
+           col = 1:length(pdb_ids),
+           lwd = 2,
+           cex = 0.8)
+  }
+   invisible(bf_list)
+}
+
+# Use the function - works for any number of proteins 
+
+my_ids <- c("4AKE", "1AKE", "1E4Y")   # add as many as you like
+bfactors <- get_bfactors(my_ids)
+```
