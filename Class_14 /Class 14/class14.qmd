@@ -1,0 +1,249 @@
+---
+title: "Class 14: RNASeq mini project"
+author: "Serena Quezada"
+format: pdf
+toc: true
+---
+
+## Background
+
+Here we work through a complete RNASeq analysis project 
+
+## Data Import
+
+Reading the `counts` and `metadata` CSV files 
+
+```{r}
+rawcounts <- read.csv("GSE37704_featurecounts.csv", row.names = 1)
+metadata <- read.csv("GSE37704_metadata.csv")
+```
+
+Check on data structure 
+
+```{r}
+head(rawcounts)
+```
+
+```{r}
+metadata
+```
+Some book-keeping is required as there looks to be a mis-match between metadata rows and counts columns. 
+
+```{r}
+ncol(rawcounts)
+```
+
+```{r}
+nrow(metadata)
+```
+
+Looks like we need to get rid of the first "length" column of our `counts` object.
+
+```{r, message=FALSE}
+counts <- rawcounts[, -1]
+```
+
+```{r}
+cleancounts <- counts[rowSums(counts) > 0, ]
+```
+
+
+```{r}
+# Keep only columns in cleancounts that match metadata$id
+cleancounts <- cleancounts[, metadata$id]
+
+# Optionally, reorder metadata to match the column order of cleancounts
+metadata <- metadata[match(colnames(cleancounts), metadata$id), ]
+```
+
+```{r}
+all(colnames(cleancounts) == metadata$id)
+```
+
+```{r}
+metadata$id
+```
+
+## Remove zero count genes
+
+There are lots of genes with zero counts. We can remove these from further analysis.
+
+```{r}
+head(cleancounts)
+```
+
+```{r}
+to.keep.inds <- rowSums(cleancounts) > 0 
+nonzero_counts <- cleancounts[to.keep.inds, ]
+```
+
+## DESeq analysis 
+
+Load the package 
+
+```{r, message=FALSE}
+library(DESeq2)
+```
+
+Set up DESeq object
+
+```{r}
+dds <- DESeqDataSetFromMatrix(countData = nonzero_counts, 
+                              colData = metadata,
+                              design = ~condition)
+```
+
+Run DEseq 
+
+```{r}
+dds <- DESeq(dds)
+```
+
+Get results
+
+```{r}
+res <- results(dds)
+head(res)
+```
+
+## Data Visualization
+
+Volcano plot
+
+```{r}
+library(ggplot2)
+
+ggplot(res) +
+  aes(log2FoldChange, -log(padj)) +
+  geom_point()
+```
+
+```{r}
+mycols <- rep("gray", nrow(res))
+mycols[ abs(res$log2FoldChange) > 2 ] <- "red"
+inds <- (res$padj < 0.01) & (abs(res$log2FoldChange) > 2)
+mycols[inds] <- "blue"
+
+plot(res$log2FoldChange, -log(res$padj), col=mycols, 
+     xlab="Log2(FoldChange)", ylab="-Log(P-value)")
+abline(v=c(-2,2), col="gray", lty=2)
+abline(h=-log(0.01), col="gray", lty=2)
+```
+
+Add threshold lines for fold-change and P-value and color our subset of genes that makes these threshol cut-offs in the plot
+
+## Add Annotation
+
+Add gene symbol and entrez
+
+```{r}
+library(AnnotationDbi)
+library(org.Hs.eg.db)
+```
+
+```{r}
+columns(org.Hs.eg.db)
+```
+```{r}
+res$symbol <- mapIds (x= org.Hs.eg.db,
+        keys = row.names(res),
+        keytype = "ENSEMBL",
+        column = "SYMBOL")
+
+res$entrez <- mapIds (x= org.Hs.eg.db,
+        keys = row.names(res),
+        keytype = "ENSEMBL",
+        column = "ENTREZID")
+```
+
+## Pathway Analysis
+
+Run gage analysis 
+
+```{r, message=FALSE}
+library(gage)
+library(gageData)
+library(pathview)
+
+data(kegg.sets.hs)
+data(sigmet.idx.hs)
+
+# Focus on signaling and metabolic pathways only
+kegg.sets.hs = kegg.sets.hs[sigmet.idx.hs]
+
+# Examine the first 3 pathways
+head(kegg.sets.hs, 3)
+```
+
+We need a named vector of fold-change values as input for gage
+
+```{r}
+foldchanges = res$log2FoldChange
+names(foldchanges) = res$entrez
+head(foldchanges)
+```
+```{r}
+data(kegg.sets.hs)
+keggres = gage(foldchanges, gsets = kegg.sets.hs)
+```
+
+```{r}
+head(keggres$less)
+```
+
+```{r}
+pathview(pathway.id = "hsa04110", gene.data = foldchanges)
+```
+
+![](hsa04110.pathview.png)
+
+```{r}
+pathview(pathway.id = "hsa03030", gene.data = foldchanges)
+```
+
+![](hsa03030.pathview.png)
+
+### GO terms
+
+Same analysis but using GO genesets rathen than KEGG
+
+```{r}
+data(go.sets.hs)
+data(go.subs.hs)
+
+# Focus on Biological Process subset of GO
+gobpsets = go.sets.hs[go.subs.hs$BP]
+
+gobpres = gage(foldchanges, gsets=gobpsets, same.dir=TRUE)
+
+```
+
+```{r}
+head(gobpres$less, 4)
+```
+### Reactome
+
+Lots of people like the reactome web interface. You can also run this as an R function but lets look at the website first < https://reactome.org/ >
+
+The website wants a text file with one gene symbol per line of the genes you want to map to pathways
+
+```{r}
+sig_genes <- res[res$padj <= 0.05 & !is.na(res$padj), "symbol"]
+head(sig_genes)
+```
+and write out a file: 
+
+```{r}
+write.table(sig_genes, file="significant_genes.txt", row.names=FALSE, col.names=FALSE, quote=FALSE)
+```
+
+## Save our results 
+
+```{r}
+write.csv(res, file = "myresults.csv")
+```
+
+
+
+
+
