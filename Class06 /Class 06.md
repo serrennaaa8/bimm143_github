@@ -46,7 +46,7 @@ The `sample()` function could be useful here
 sample(1:10, size = 3)
 ```
 
-    [1] 6 4 7
+    [1] 3 5 6
 
 Change this to work with nucleotides A C G and T and return 3 of them
 
@@ -55,7 +55,7 @@ n <- c("A", "C", "G", "T")
 sample(n, size = 15, replace = TRUE)
 ```
 
-     [1] "C" "A" "T" "G" "G" "C" "T" "A" "A" "T" "T" "G" "T" "T" "T"
+     [1] "C" "A" "T" "T" "A" "A" "A" "G" "T" "A" "A" "T" "C" "T" "T"
 
 Turn this snipet into a function that returns a user specified length
 duo sequence. Let’s call it `generate_dna()`…
@@ -84,7 +84,7 @@ generate_dna(5)
 
     Well done you!
 
-    [1] "C" "G" "A" "C" "G"
+    [1] "A" "G" "C" "C" "G"
 
 ``` r
 s <- generate_dna(15)
@@ -96,7 +96,7 @@ s <- generate_dna(15)
 s
 ```
 
-     [1] "A" "C" "G" "G" "C" "C" "G" "A" "C" "C" "G" "T" "G" "C" "T"
+     [1] "G" "G" "T" "G" "C" "G" "G" "C" "A" "G" "C" "T" "C" "C" "A"
 
 I want the option to return a single element character vector with my
 sequence all together like this: “GGAGTAC”
@@ -107,7 +107,7 @@ generate_dna(10, fasta = FALSE)
 
     Well done you!
 
-     [1] "A" "T" "A" "A" "C" "C" "A" "C" "A" "C"
+     [1] "G" "T" "C" "G" "A" "G" "G" "C" "T" "C"
 
 ## A more advanced example
 
@@ -136,7 +136,7 @@ Try this out…
 generate_protein(10)
 ```
 
-    [1] "PCYFDTYLPE"
+    [1] "HYERYDMQTK"
 
 > Q.Generate random protein sequences between lengths 5 and 12
 > amino-acids.
@@ -145,13 +145,13 @@ generate_protein(10)
 generate_protein(5)
 ```
 
-    [1] "SSMMA"
+    [1] "FMIGP"
 
 ``` r
 generate_protein(6)
 ```
 
-    [1] "RIWAIF"
+    [1] "AHEHCC"
 
 One approach is to do this by brute force calling our function for each
 length 5 to 12.
@@ -172,26 +172,26 @@ for (i in seq_lengths) {
 ```
 
     > 6 
-    RFADSC
+    RYFEIQ
     > 7 
-    YTTTSYH
+    PFYDWNV
     > 8 
-    YGCKKGKW
+    FWAFLNGA
     > 9 
-    QLLAGINHN
+    NIEFTTIEL
     > 10 
-    NEKTSVKKCT
+    CQGMRATSQE
     > 11 
-    QCWSSKMATND
+    RMDSKHTARLY
     > 12 
-    RVMPHLPEWEMG
+    QLRKPMHCNPVT
 
 ``` r
 sapply(5:12, generate_protein)
 ```
 
-    [1] "SFHMV"        "NTHFWV"       "SSTDVFN"      "HICRHPSM"     "VTKTIGEWR"   
-    [6] "CWPMENNMCP"   "FVQAFNMQDQC"  "SIMHEHPFWLSK"
+    [1] "FEEPH"        "KQHCAS"       "KQYQNWC"      "WPNCTRNW"     "VVFMEWFPA"   
+    [6] "RPVGGMKNRA"   "ASVWPPICYCQ"  "QIYGTCITWVIG"
 
 > **Key-Point**: Writing functions in R is doable but not the easiest
 > thing in the world. Starting with a working snippet of code and then
