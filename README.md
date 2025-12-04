@@ -2,7 +2,7 @@
 Classwork for [BIMM143 at UC San Diego] (https://bioboot.github.io/bimm143_F25/) during Fall 2025.
 
 - Class 04 [R fundamentals]()
-- Class 05 [Data Viz with ggplot]
+- Class 05 [Data Viz with ggplot] (Class 5/Class05.md)
 - Class 06 [Writing R functions]()
 - Class 07 [Machine learning 1 ]()
 - Class 08 [Breast Cancer Analysis mini project]()
@@ -17,3 +17,4 @@ Classwork for [BIMM143 at UC San Diego] (https://bioboot.github.io/bimm143_F25/)
 - Class 17 [Genome informatics and high throughput sequencing]()
 - Class 18 Thanksgiving holiday
 - Class 19 [Investigating pertussis resurgence mini project]()
+  
